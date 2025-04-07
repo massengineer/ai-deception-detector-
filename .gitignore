@@ -1,0 +1,36 @@
+# VSCode settings
+.vscode/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Conda environment files
+env/
+.venv/
+.env/
+
+# Data files and logs (optional)
+*.csv
+*.log
+
+# Model weights and outputs (optional)
+*.h5
+*.pkl
+*.ckpt
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Project-level builds
+build/
+dist/
+*.egg-info/
+
+# PyInstaller output
+*.spec
