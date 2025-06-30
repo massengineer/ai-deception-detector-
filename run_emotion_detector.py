@@ -1,6 +1,7 @@
 import cv2
 from deepface import DeepFace
 import numpy as np
+import os
 
 def main():
     """
@@ -19,20 +20,41 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     cap.set(cv2.CAP_PROP_FPS, 30)
     
-    # Load OpenCV's face detection classifier
-    # Try to use the built-in haar cascade first
-    try:
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    except AttributeError:
-        # If cv2.data doesn't exist, try local file
-        face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-        
-        # Check if the classifier loaded successfully
-        if face_cascade.empty():
+    # Load OpenCV's face detection classifier with better error handling
+    face_cascade = None
+    
+    # Try multiple ways to load the haar cascade
+    cascade_paths = [
+        cv2.data.haarcascades + 'haarcascade_frontalface_default.xml',
+        'haarcascade_frontalface_default.xml',  # Local file
+        os.path.join(os.path.dirname(cv2.__file__), 'data', 'haarcascade_frontalface_default.xml'),
+        os.path.join(cv2.__path__[0], 'data', 'haarcascade_frontalface_default.xml')
+    ]
+    
+    for path in cascade_paths:
+        try:
+            if os.path.exists(path):
+                face_cascade = cv2.CascadeClassifier(path)
+                if not face_cascade.empty():
+                    print(f"Successfully loaded haar cascade from: {path}")
+                    break
+        except:
+            continue
+    
+    # If still no cascade found, try to find it in the OpenCV installation
+    if face_cascade is None or face_cascade.empty():
+        try:
+            # Alternative: use cv2 directly without file path
+            face_cascade = cv2.CascadeClassifier()
+            if not face_cascade.load(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'):
+                raise Exception("Could not load cascade")
+        except:
             print("Error: Could not load haar cascade classifier")
-            print("Please download haarcascade_frontalface_default.xml from:")
-            print("https://github.com/opencv/opencv/tree/master/data/haarcascades")
-            print("and place it in the same directory as this script")
+            print("\nTroubleshooting steps:")
+            print("1. Try reinstalling OpenCV: pip uninstall opencv-python && pip install opencv-python")
+            print("2. Or download the file manually from:")
+            print("   https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml")
+            print("3. Save it as 'haarcascade_frontalface_default.xml' in the same directory as this script")
             return
     
     print("Facial Emotion Recognition System Started")
@@ -40,6 +62,8 @@ def main():
     
     # Frame counter for performance optimization
     frame_count = 0
+    current_emotion = "Detecting..."
+    current_confidence = 0
     
     while True:
         # Capture frame from webcam
@@ -100,10 +124,7 @@ def main():
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
             
             # Prepare emotion text
-            if 'current_emotion' in locals():
-                emotion_text = f"{current_emotion} ({current_confidence:.1f}%)"
-            else:
-                emotion_text = "Detecting..."
+            emotion_text = f"{current_emotion} ({current_confidence:.1f}%)"
             
             # Add text background for better readability
             text_size = cv2.getTextSize(emotion_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)[0]
@@ -154,6 +175,7 @@ def check_requirements():
         import cv2
         import deepface
         print("All required packages are installed!")
+        print(f"OpenCV version: {cv2.__version__}")
         return True
     except ImportError as e:
         print(f"Missing package: {e}")
