@@ -20,7 +20,20 @@ def main():
     cap.set(cv2.CAP_PROP_FPS, 30)
     
     # Load OpenCV's face detection classifier
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    # Try to use the built-in haar cascade first
+    try:
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    except AttributeError:
+        # If cv2.data doesn't exist, try local file
+        face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+        
+        # Check if the classifier loaded successfully
+        if face_cascade.empty():
+            print("Error: Could not load haar cascade classifier")
+            print("Please download haarcascade_frontalface_default.xml from:")
+            print("https://github.com/opencv/opencv/tree/master/data/haarcascades")
+            print("and place it in the same directory as this script")
+            return
     
     print("Facial Emotion Recognition System Started")
     print("Press 'q' or 'ESC' to quit")
